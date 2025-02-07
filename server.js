@@ -6,8 +6,8 @@ I declare that this assignment is my own work in accordance with Seneca  Academi
 Name: Jhonatan Lopez Olguin 
 Student ID: 147028237 
 Date: 6 Febr 2025
-Cyclic Web App URL: _______________________________________________________
-GitHub Repository URL: ______________________________________________________
+Cyclic Web App URL: https://replit.com/@JhonatanLopez6/web322-app?v=1
+GitHub Repository URL: https://github.com/jhonath1010/web322-app
 
 ********************************************************************************/ 
 
