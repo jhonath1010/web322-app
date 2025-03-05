@@ -3,7 +3,11 @@ module.exports = {
     initialize,
     getAllItems,
     getPublishedItems,
-    getCategories
+    getCategories,
+    addItem, //New added AS3
+    getItemsByCategory, 
+    getItemsByMinDate, 
+    getItemById
 }
 
 // importing modules
@@ -79,4 +83,47 @@ function getCategories() {
             reject('No results returned');
         }
     })
+}
+//New addItem function AS3
+const items = []; // Temporary in-memory storage
+
+function addItem(itemData) {
+    return new Promise((resolve, reject) => {
+        try {
+            // Ensure "published" is explicitly set to false if undefined
+            itemData.published = itemData.published ? true : false;
+            
+            // Assign a unique ID based on array length
+            itemData.id = items.length + 1;
+            
+            // Add new item to the array
+            items.push(itemData);
+            
+            // Resolve the promise with the new item
+            resolve(itemData);
+        } catch (error) {
+            reject("Error adding item: " + error);
+        }
+    });
+}
+
+function getItemsByCategory(category) {
+    return new Promise((resolve, reject) => {
+        let filteredItems = items.filter(item => item.category == category);
+        filteredItems.length > 0 ? resolve(filteredItems) : reject("No results returned");
+    });
+}
+
+function getItemsByMinDate(minDateStr) {
+    return new Promise((resolve, reject) => {
+        let filteredItems = items.filter(item => new Date(item.postDate) >= new Date(minDateStr));
+        filteredItems.length > 0 ? resolve(filteredItems) : reject("No results returned");
+    });
+}
+
+function getItemById(id) {
+    return new Promise((resolve, reject) => {
+        let item = items.find(item => item.id == id);
+        item ? resolve(item) : reject("No result returned");
+    });
 }
