@@ -85,21 +85,20 @@ function getCategories() {
     })
 }
 //New addItem function AS3
-const items = []; // Temporary in-memory storage
-
+// ✅ Fix: Ensure `addItem()` updates `itemsArray`
 function addItem(itemData) {
     return new Promise((resolve, reject) => {
         try {
             // Ensure "published" is explicitly set to false if undefined
             itemData.published = itemData.published ? true : false;
-            
-            // Assign a unique ID based on array length
-            itemData.id = items.length + 1;
-            
-            // Add new item to the array
-            items.push(itemData);
-            
-            // Resolve the promise with the new item
+
+            // ✅ Correctly assign ID based on `itemsArray.length + 1`
+            itemData.id = itemsArray.length + 1;
+
+            // ✅ Ensure item is added to the correct dataset
+            itemsArray.push(itemData);
+
+            // ✅ Successfully resolve the new item
             resolve(itemData);
         } catch (error) {
             reject("Error adding item: " + error);
@@ -107,23 +106,42 @@ function addItem(itemData) {
     });
 }
 
-function getItemsByCategory(category) {
-    return new Promise((resolve, reject) => {
-        let filteredItems = items.filter(item => item.category == category);
-        filteredItems.length > 0 ? resolve(filteredItems) : reject("No results returned");
-    });
-}
-
-function getItemsByMinDate(minDateStr) {
-    return new Promise((resolve, reject) => {
-        let filteredItems = items.filter(item => new Date(item.postDate) >= new Date(minDateStr));
-        filteredItems.length > 0 ? resolve(filteredItems) : reject("No results returned");
-    });
-}
-
+// ✅ Fix: Ensure `getItemById(id)` looks in `itemsArray`
 function getItemById(id) {
     return new Promise((resolve, reject) => {
-        let item = items.find(item => item.id == id);
-        item ? resolve(item) : reject("No result returned");
+        const item = itemsArray.find(item => item.id === parseInt(id)); 
+        if (item) {
+            resolve(item);
+        } else {
+            reject('item not found');
+        }
+    });
+}
+
+// ✅ Fix: Ensure `getItemsByCategory(category)` filters `itemsArray`
+function getItemsByCategory(category) {
+    return new Promise((resolve, reject) => {
+        const categoryItems = itemsArray.filter(item => item.category == category);
+        if (categoryItems.length) {
+            resolve(categoryItems);
+        } else {
+            reject('no results returned');
+        }
+    });
+}
+
+// ✅ Fix: Ensure `getItemsByMinDate(minDateStr)` filters `itemsArray`
+function getItemsByMinDate(minDateStr) {
+    return new Promise((resolve, reject) => {
+        const minDate = new Date(minDateStr);
+        if (isNaN(minDate.getTime())) {
+            return reject("Invalid date format");
+        }
+        const dateItems = itemsArray.filter(item => new Date(item.postDate) >= minDate);
+        if (dateItems.length) {
+            resolve(dateItems);
+        } else {
+            reject('no results returned');
+        }
     });
 }

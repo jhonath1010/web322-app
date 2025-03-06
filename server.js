@@ -139,8 +139,9 @@ app.get("/items", (req, res) => {
 app.get("/item/:id", (req, res) => {
     storeService.getItemById(req.params.id)
         .then((item) => res.json(item))
-        .catch(() => res.status(404).json({ message: err }));
+        .catch((err) => res.status(404).json({ message: err })); 
 });
+
 
 
 // 404 Error Handling
