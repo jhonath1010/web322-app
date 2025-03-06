@@ -85,20 +85,20 @@ function getCategories() {
     })
 }
 //New addItem function AS3
-// ✅ Fix: Ensure `addItem()` updates `itemsArray`
+// Ensure `addItem()` updates `itemsArray`
 function addItem(itemData) {
     return new Promise((resolve, reject) => {
         try {
-            // Ensure "published" is explicitly set to false if undefined
+            // "published" is explicitly set to false if undefined
             itemData.published = itemData.published ? true : false;
 
-            // ✅ Correctly assign ID based on `itemsArray.length + 1`
+            //Correctly assign ID based on `itemsArray.length + 1`
             itemData.id = itemsArray.length + 1;
 
-            // ✅ Ensure item is added to the correct dataset
+            // Ensure item is added to the correct dataset
             itemsArray.push(itemData);
 
-            // ✅ Successfully resolve the new item
+            // Successfully resolve the new item
             resolve(itemData);
         } catch (error) {
             reject("Error adding item: " + error);
@@ -118,7 +118,7 @@ function getItemById(id) {
     });
 }
 
-// ✅ Fix: Ensure `getItemsByCategory(category)` filters `itemsArray`
+//Ensure `getItemsByCategory(category)` filters `itemsArray`
 function getItemsByCategory(category) {
     return new Promise((resolve, reject) => {
         const categoryItems = itemsArray.filter(item => item.category == category);
@@ -130,7 +130,7 @@ function getItemsByCategory(category) {
     });
 }
 
-// ✅ Fix: Ensure `getItemsByMinDate(minDateStr)` filters `itemsArray`
+//Ensure `getItemsByMinDate(minDateStr)` filters `itemsArray`
 function getItemsByMinDate(minDateStr) {
     return new Promise((resolve, reject) => {
         const minDate = new Date(minDateStr);
