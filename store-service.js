@@ -106,7 +106,7 @@ function addItem(itemData) {
     });
 }
 
-// ✅ Fix: Ensure `getItemById(id)` looks in `itemsArray`
+//Ensure `getItemById(id)` looks in `itemsArray`
 function getItemById(id) {
     return new Promise((resolve, reject) => {
         const item = itemsArray.find(item => item.id === parseInt(id)); 
