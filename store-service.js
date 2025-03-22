@@ -84,25 +84,15 @@ function getCategories() {
         }
     })
 }
-//New addItem function AS3
-// Ensure `addItem()` updates `itemsArray`
+//New addItem function AS4 
+//To add new Item
 function addItem(itemData) {
     return new Promise((resolve, reject) => {
-        try {
-            // "published" is explicitly set to false if undefined
-            itemData.published = itemData.published ? true : false;
-
-            //Correctly assign ID based on `itemsArray.length + 1`
-            itemData.id = itemsArray.length + 1;
-
-            // Ensure item is added to the correct dataset
-            itemsArray.push(itemData);
-
-            // Successfully resolve the new item
-            resolve(itemData);
-        } catch (error) {
-            reject("Error adding item: " + error);
-        }
+        itemData.id = getNextItemId();
+        itemData.published = itemData.published !== undefined;
+        itemData.postDate = new Date().toISOString().split('T')[0]; // Ensure postDate is set
+        items.push(itemData);
+        resolve(itemData);
     });
 }
 
