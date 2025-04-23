@@ -1,5 +1,5 @@
 /*********************************************************************************
-* WEB322 – Assignment 05
+* WEB322 – Assignment 06
 * I declare that this assignment is my own work in accordance with Seneca Academic Policy. No part of this
 * assignment has been copied manually or electronically from any other source (including web sites) or
 * distributed to other students.
@@ -11,8 +11,7 @@
 * Cyclic Web App URL: https://replit.com/@JhonatanLopez6/web322-app?v=1
 * GitHub Repository URL: https://github.com/jhonath1010/web322-app
 ********************************************************************************/
-
-// Required modules
+//Required modules
 const express = require('express');
 const path = require('path');
 const multer = require("multer");
@@ -21,17 +20,21 @@ const streamifier = require("streamifier");
 const expressEjsLayouts = require('express-ejs-layouts');
 const storeService = require('./store-service.js');
 
-// App setup
-const app = express();
-const upload = multer(); // for handling image uploads
+//Modules added for assigment #6
+const authData = require('./auth-service');
+const clientSessions = require('client-sessions');
 
-// Cloudinary configuration
+const app = express();
+const upload = multer();
+
+//Cloudinary configuration
 cloudinary.config({
     cloud_name: "dqcbey2fr",
     api_key: "465325822784863",
     api_secret: "GHqyVmEiERQYd13Ln1OVtTl_FVk",
     secure: true
 });
+
 const HTTP_PORT = process.env.PORT || 8080;
 
 // View engine setup
@@ -46,8 +49,31 @@ app.use(express.urlencoded({ extended: true }));
 // Middleware for serving static files
 app.use(express.static(path.join(__dirname, 'public')));
 
-// Middleware to track active route & selected category
-app.use(function (req, res, next) {
+// Client Sessions Setup (Assignment 6)
+app.use(clientSessions({
+    cookieName: "session",
+    secret: "web322_assignment6_secret_key",
+    duration: 2 * 60 * 1000, // 2 minutes
+    activeDuration: 1000 * 60 // 1 minute
+}));
+
+app.use((req, res, next) => {
+    res.locals.session = req.session;
+    next();
+});
+
+// ensureLogin Middleware (Assignment 6)
+function ensureLogin(req, res, next) {
+    if (!req.session.user) {
+        res.redirect('/login');
+    } else {
+        next();
+    }
+}
+
+
+// Middleware for serving static files
+app.use((req, res, next) => {
     let route = req.path.substring(1);
     res.locals.activeRoute = "/" + (isNaN(route.split('/')[1]) ? route.replace(/\/(?!.*)/, "") : route.replace(/\/(.*)/, ""));
     res.locals.viewingCategory = req.query.category;
@@ -102,8 +128,8 @@ app.get('/shop/:id', async (req, res) => {
     }
 });
 
-// View all items (with filters)
-app.get('/items', async (req, res) => {
+// View all items (with filters) - Protected
+app.get('/items', ensureLogin, async (req, res) => {
     try {
         const { category, minDate } = req.query;
         let items;
@@ -133,8 +159,8 @@ app.get('/item/:id', (req, res) => {
         .catch(err => res.status(500).json({ message: err }));
 });
 
-// Render all categories
-app.get('/categories', async (req, res) => {
+// Render all categories - Protected
+app.get('/categories', ensureLogin, async (req, res) => {
     try {
         const categories = await storeService.getCategories();
         if (categories && categories.length > 0) {
@@ -147,34 +173,34 @@ app.get('/categories', async (req, res) => {
     }
 });
 
-// Add category form
-app.get('/categories/add', (req, res) => {
+// Add category form - Protected
+app.get('/categories/add', ensureLogin, (req, res) => {
     res.render('addCategory');
 });
 
-// Add category (POST)
-app.post('/categories/add', (req, res) => {
+// Add category (POST) - Protected
+app.post('/categories/add', ensureLogin, (req, res) => {
     storeService.addCategory(req.body)
         .then(() => res.redirect('/categories'))
         .catch(() => res.status(500).send("Unable to Add Category"));
 });
 
-// Delete category by ID
-app.get('/categories/delete/:id', (req, res) => {
+// Delete category by ID - Protected
+app.get('/categories/delete/:id', ensureLogin, (req, res) => {
     storeService.deleteCategoryById(req.params.id)
         .then(() => res.redirect('/categories'))
         .catch(() => res.status(500).send("Unable to Remove Category / Category not found"));
 });
 
-// Add item form
-app.get('/items/add', (req, res) => {
+// Add item form - Protected
+app.get('/items/add', ensureLogin, (req, res) => {
     storeService.getCategories()
         .then((data) => res.render('addItem', { categories: data }))
         .catch(() => res.render('addItem', { categories: [] }));
 });
 
-// Add item (POST with image upload to Cloudinary)
-app.post('/items/add', upload.single("featureImage"), (req, res) => {
+// Add item (POST with image upload) - Protected
+app.post('/items/add', ensureLogin, upload.single("featureImage"), (req, res) => {
     const processItem = (imageUrl) => {
         req.body.featureImage = imageUrl;
         storeService.addItem(req.body)
@@ -209,11 +235,64 @@ app.post('/items/add', upload.single("featureImage"), (req, res) => {
     }
 });
 
-// Delete item by ID
-app.get('/items/delete/:id', (req, res) => {
+// Delete item by ID - Protected
+app.get('/items/delete/:id', ensureLogin, (req, res) => {
     storeService.deleteItemById(req.params.id)
         .then(() => res.redirect('/items'))
         .catch(() => res.status(500).send("Unable to Remove Item / Item not found"));
+});
+
+// New Routes for Assignment 6 - Authentication
+app.get('/login', (req, res) => {
+    res.render('login');
+});
+
+app.get('/register', (req, res) => {
+    res.render('register');
+});
+
+app.post('/register', (req, res) => {
+    authData.registerUser(req.body)
+        .then(() => {
+            res.render('register', {
+                successMessage: "User created"
+            });
+        })
+        .catch((err) => {
+            res.render('register', {
+                errorMessage: err,
+                userName: req.body.userName
+            });
+        });
+});
+
+app.post('/login', (req, res) => {
+    req.body.userAgent = req.get('User-Agent');
+
+    authData.checkUser(req.body)
+        .then((user) => {
+            req.session.user = {
+                userName: user.userName,
+                email: user.email,
+                loginHistory: user.loginHistory
+            };
+            res.redirect('/items');
+        })
+        .catch((err) => {
+            res.render('login', {
+                errorMessage: err,
+                userName: req.body.userName
+            });
+        });
+});
+
+app.get('/logout', (req, res) => {
+    req.session.reset();
+    res.redirect('/');
+});
+
+app.get('/userHistory', ensureLogin, (req, res) => {
+    res.render('userHistory');
 });
 
 // Handle 404 errors
@@ -221,8 +300,9 @@ app.use((req, res) => {
     res.status(404).render('404');
 });
 
-// Initialize the data service and start the server
+// Initialize services and start server
 storeService.initialize()
+    .then(authData.initialize)
     .then(() => {
         app.listen(HTTP_PORT, () => {
             console.log("Express http server listening on port", HTTP_PORT);
